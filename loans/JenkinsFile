@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven' // Maven tool configured in Jenkins
+    }
+
+    environment {
+        // SonarQube server & project settings
+        SONAR_HOST_URL = 'http://your-sonarqube-server:9000'
+        SONAR_AUTH_TOKEN = credentials('nilay') // Jenkins credential ID
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/NILAYRAVAL/Loan_Project.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('LoanApp') { // Name from Jenkins config
+                    sh '''
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=Microservice_wineapp \
+                          -Dsonar.projectName=Microservice_wineapp \
+                          -Dsonar.java.binaries=target/classes
+                    '''
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying the Java application..."
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}
