@@ -3,6 +3,7 @@ pipeline {
 
     tools {
         maven 'maven' // Maven tool configured in Jenkins
+        sonarqube 'SonarScanner' // The name set in Jenkins tools config
     }
 
     environment {
@@ -25,18 +26,17 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('Loan') { // Name from Jenkins config
-                    sh '''
-                        mvn sonar:sonar \
-                          -Dsonar.projectKey=Microservice_wineapp \
-                          -Dsonar.projectName=Microservice_wineapp \
-                          -Dsonar.java.binaries=target/classes
-                    '''
+             steps {
+                withSonarQubeEnv('Sonarqube') { // The name from Jenkins config
+                    sh 'sonar-scanner'
                 }
             }
         }
-
+         stage('Quality Gate') {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
         stage('Test') {
             steps {
                 sh 'mvn test'
